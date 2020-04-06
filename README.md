@@ -4,7 +4,7 @@ Python API client to fetch data from Castor EDC
 ### Usage
 First, make sure that save the client and secret from your Castor account in seperate *client* and *secret* files (without line endings) in a private folder on your PC. Do not share these files with anyone.    
 
-See also https://data.castoredc.com/api
+See also https://data.castoredc.com/api and https://helpdesk.castoredc.com/article/124-application-programming-interface-api
 
 ### Example code
     from castor_api import Castor_api
