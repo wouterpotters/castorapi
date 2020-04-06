@@ -21,4 +21,5 @@ I am not affiliated with Castor EDC in any way. Use this software at your own ri
 
 ## TODO
 - implement POST endpoints of the api
+- implement PATCH endpoints of the api
 - add more documentation
