@@ -1,6 +1,9 @@
 # castor-python
 Python API client to fetch data from Castor EDC
 
+### Installing
+Download (https://github.com/wouterpotters/castor-python/archive/master.zip) or clone the repository and add the files in your python directory. Then import the Castor_api to your python script using: `from castor_api import Castor_api`
+
 ### Usage
 First, make sure that save the client and secret from your Castor account in seperate *client* and *secret* files (without line endings) in a private folder on your PC. Do not share these files with anyone.    
 
