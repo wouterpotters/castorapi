@@ -4,7 +4,7 @@ setup(
   packages = ['castorapi'],   # Chose the same as "name"
   version = '0.1',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
-  description = 'Python API wrapper for Castor EDC to fetch data from you clinical study.',   # Give a short description about your library
+  description = 'Python API wrapper for Castor EDC to fetch data from you clinical study.',
   author = 'Wouter V. Potters',                   # Type in your name
   author_email = 'w.v.potters@amsterdamumc.nl',      # Type in your E-Mail
   url = 'https://github.com/wouterpotters/castorapi',   # Provide either the link to your github or to your website
@@ -19,6 +19,7 @@ setup(
             'progressbar',
             'logging'
       ],
+  long_description=open('README.md').read(),
   classifiers=[
     'Development Status :: 3 - Alpha',      # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
     'Intended Audience :: Developers',      # Define that your audience are developers
