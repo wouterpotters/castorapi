@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 setup(
   name = 'castorapi',         # How you named your package folder (MyLib)
   packages = ['castorapi'],   # Chose the same as "name"
