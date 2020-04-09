@@ -1,4 +1,4 @@
-# castor-python
+# castorapi
 Python API client to fetch data from Castor EDC
 
 ### Installing
