@@ -1,6 +1,17 @@
 # castorapi
 Python API wrapper for Castor EDC to fetch data from you clinical study.
 
+## Install
+It is recommended to use anaconda.
+
+Using conda
+
+    conda install castorapi
+
+Using pip
+
+    pip install castorapi
+
 ## Usage
 First, make sure that save the client and secret from your Castor account in 
 seperate *client* and *secret* files (without line endings) in a private 
