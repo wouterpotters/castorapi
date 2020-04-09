@@ -6,7 +6,7 @@ It is recommended to use anaconda.
 
 Using conda: ![Conda logo](https://anaconda.org/wouterpotters/castorapi/badges/installer/conda.svg)
 
-    conda install castorapi
+    conda install -c wouterpotters castorapi
 
 Using pip (https://pypi.org/project/castorapi/)
 
