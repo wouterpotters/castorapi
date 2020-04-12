@@ -8,6 +8,10 @@ Using conda: ![Conda logo](https://anaconda.org/wouterpotters/castorapi/badges/i
 
     conda install -c wouterpotters castorapi
 
+or from the conda-forge channel
+
+    conda install -c conda-forge castorapi
+
 Using pip (https://pypi.org/project/castorapi/)
 
     pip install castorapi
