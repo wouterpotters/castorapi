@@ -2,7 +2,7 @@ from setuptools import setup
 setup(
   name = 'castorapi',         # How you named your package folder (MyLib)
   packages = ['castorapi'],   # Chose the same as "name"
-  version = '0.1.1',      # Start with a small number and increase it with every change you make
+  version = '0.1.2',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'Python API wrapper for Castor EDC to fetch data from you clinical study.',
   author = 'Wouter V. Potters',                   # Type in your name
