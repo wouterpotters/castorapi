@@ -4,11 +4,7 @@ Python API wrapper for Castor EDC to fetch data from you clinical study.
 ## Install
 It is recommended to use anaconda.
 
-Using conda: ![Conda logo](https://anaconda.org/wouterpotters/castorapi/badges/installer/conda.svg)
-
-    conda install -c wouterpotters castorapi
-
-or from the conda-forge channel
+Using conda and the conda-forge channel
 
     conda install -c conda-forge castorapi
 
