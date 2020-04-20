@@ -2,7 +2,7 @@ from setuptools import setup
 setup(
   name = 'castorapi',         # How you named your package folder (MyLib)
   packages = ['castorapi'],   # Chose the same as "name"
-  version = '0.1',      # Start with a small number and increase it with every change you make
+  version = '0.1.1',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'Python API wrapper for Castor EDC to fetch data from you clinical study.',
   author = 'Wouter V. Potters',                   # Type in your name
@@ -11,9 +11,6 @@ setup(
   download_url = 'https://github.com/wouterpotters/castorapi/archive/master.zip',    # I explain this later on
   keywords = ['Castor EDC', 'API', 'Castor','Clinical study','database','data science'],   # Keywords that define your package best
   install_requires=[            # I get to this in a second
-            'io',
-            'json',
-            'os',
             'pandas',
             'requests',
             'progressbar',
