@@ -3,8 +3,6 @@ import unittest
 import castorapi as ca
 
 
-
-
 class TestCastorApi(unittest.TestCase):
     '''Testing the CastorApi'''
 
@@ -19,9 +17,8 @@ class TestCastorApi(unittest.TestCase):
         # The secret and client id are stored in github secrets
         client_id = os.getenv('castor_clientid')
         client_secret = os.getenv('castor_secret')
-        # self.c = ca.CastorApi(client_id=client_id,
-        #                       client_secret=client_secret)
-        self.c = ca.CastorApi('/Users/wouterpotters/Desktop/test/')
+        self.c = ca.CastorApi(client_id=client_id,
+                              client_secret=client_secret)
 
     def test_CastorApiType(self):
         # This test checks if the type of CastorApi instance is correct

@@ -84,11 +84,11 @@ class CastorApi:
             self._token = rd['access_token']
         else:
             raise NameError(
-                'castor_api expects either 1 input argument; a folder with a ' +
-                '\'secret\' and a \'client\' file containing the client and ' +
-                'secret as defined in your castor profile on ' +
+                'castor_api expects either 1 input argument; a folder with' +
+                ' a \'secret\' and a \'client\' file containing the client ' +
+                'and secret as defined in your castor profile on ' +
                 'https://data.castoredc.com/. ' +
-                'Or 2 input arguments: client_id and client_secret')
+                'Or use these 2 input arguments: client_id and client_secret')
 
     def __request(self, request):
         request_uri = self._base_url + self._api_request_path + request
@@ -99,7 +99,7 @@ class CastorApi:
             response.raise_for_status()
         except requests.exceptions.HTTPError as errh:
             logging.warning("Http Error:", errh)
-            # 500: timeout when too much data is requested with export function
+            # 500: timeout when too much data is requested with export fnc
             # 404: data not available for request
         except requests.exceptions.ConnectionError as errc:
             logging.warning("Error Connecting:", errc)
