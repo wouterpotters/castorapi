@@ -33,7 +33,3 @@ See also https://data.castoredc.com/api and https://helpdesk.castoredc.com/artic
 
 ## NOTE
 I am not affiliated with Castor EDC in any way. Use this software at your own risk.
-
-## TODO
-- implement POST endpoints of the api
-- implement PATCH endpoints of the api
