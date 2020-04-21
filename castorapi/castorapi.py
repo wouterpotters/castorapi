@@ -779,7 +779,8 @@ class CastorApi:
              for s in rd if study_name_input in s['name']]
             return None
 
-    def records_reports_all(self, study_id=None, report_names=[]):
+    def records_reports_all(self, study_id=None, report_names=[],
+                            add_including_center=False):
         study_id = self.__study_id_saveload(study_id)
 
         # get study and report structure
@@ -810,6 +811,8 @@ class CastorApi:
         # GET ALL STUDY AND REPORT VALUES FOR STUDY RECORDS - no data: None
         study_data = []
         report_data = []
+        hospitals = {r['id']: r['_embedded']['institute']['name']
+                     for r in records}
         for record in progressbar.progressbar(records,
                                               prefix='Retrieving records: '):
             study_data += self.request_datapointcollection(
@@ -820,6 +823,9 @@ class CastorApi:
         df_study = pd.pivot(pd.DataFrame(study_data),
                             values='field_value', index='record_id',
                             columns='field_id')
+        if add_including_center:
+            df_study['hospital'] = df_study.index
+            df_study['hospital'] = df_study['hospital'].replace(hospitals)
 
         # field_id -> field_variable_name
         fields = self.request_field(include='optiongroup')
