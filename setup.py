@@ -2,7 +2,7 @@ from setuptools import setup
 setup(
     name='castorapi',
     packages=['castorapi'],
-    version='0.1.4',  # Start with a small number and increase with changes
+    version='0.1.5',  # Start with a small number and increase with changes
     license='MIT',
     description='Python API wrapper for Castor EDC to ' + \
                 'fetch data from you clinical study.',
