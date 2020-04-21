@@ -7,6 +7,7 @@ scanner:
 pycodestyle:  # Same as scanner.linter value. Other option is flake8
     max-line-length: 79  # Default is 79 in PEP 8
     ignore:  # Errors and warnings to ignore
+        - W503  # this is best practice as opposed to W504...
         - E402  # module level import not at top of file; ignore until solution for local imports was implemented
         - E731  # do not assign a lambda expression, use a def; ignore until current lambda expressions are fixed
 
