@@ -56,16 +56,17 @@ class CastorApi:
     def __init__(self, folder_with_client_and_secret=None,
                  client_id=None,
                  client_secret=None):
-        if folder_with_client_and_secret is not None and os.path.isdir(folder_with_client_and_secret):
-            # load client id & secret for current user from folder
-            def find_file(name): return [file for file in os.listdir(
-                folder_with_client_and_secret) if name in file][0]
-            with open(os.path.join(folder_with_client_and_secret,
-                                   find_file('client')), 'r') as file:
-                client_id = file.read().rstrip()
-            with open(os.path.join(folder_with_client_and_secret,
-                                   find_file('secret')), 'r') as file:
-                client_secret = file.read().rstrip()
+        if folder_with_client_and_secret is not None:
+            if os.path.isdir(folder_with_client_and_secret):
+                # load client id & secret for current user from folder
+                def find_file(name): return [file for file in os.listdir(
+                        folder_with_client_and_secret) if name in file][0]
+                with open(os.path.join(folder_with_client_and_secret,
+                                       find_file('client')), 'r') as file:
+                    client_id = file.read().rstrip()
+                with open(os.path.join(folder_with_client_and_secret,
+                                       find_file('secret')), 'r') as file:
+                    client_secret = file.read().rstrip()
         if client_id is not None and client_secret is not None:
             # using the client and secret, get an access token
             # this castor api token can usually be used for up to 18000
@@ -79,8 +80,10 @@ class CastorApi:
                                                      client_secret,
                                                  'grant_type':
                                                      'client_credentials'})
-            print(response_token)
             rd = json.loads(response_token.text)
+            if 'error' in rd:
+                raise NameError('error '+rd['error'] + '\n'\
+                                + rd['error_description'])
             self._token = rd['access_token']
         else:
             raise NameError(
