@@ -24,16 +24,12 @@ See also https://data.castoredc.com/api and https://helpdesk.castoredc.com/artic
     c = CastorApi("/path/to/folder/with/secret_client")
     c.select_study_by_name("<castor_name_of_your_study>")
     
-    # export data - fast method
+    # export data - fast method for small studies.
     data = c.request_study_export_data() 
     
-    # export data - slow method, but required if you have many records
-    # or if you get a error 500 
+    # export data - slow method, but required for large studies with many records.
+    # (or if you start getting a error 500)
     data = c.records_reports_all()
 
 ## NOTE
 I am not affiliated with Castor EDC in any way. Use this software at your own risk.
-
-## TODO
-- implement POST endpoints of the api
-- implement PATCH endpoints of the api
