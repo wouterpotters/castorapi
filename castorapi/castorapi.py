@@ -56,7 +56,7 @@ class CastorApi:
     def __init__(self, folder_with_client_and_secret=None,
                  client_id=None,
                  client_secret=None):
-        if os.path.isdir(folder_with_client_and_secret):
+        if folder_with_client_and_secret is not None and os.path.isdir(folder_with_client_and_secret):
             # load client id & secret for current user from folder
             def find_file(name): return [file for file in os.listdir(
                 folder_with_client_and_secret) if name in file][0]
