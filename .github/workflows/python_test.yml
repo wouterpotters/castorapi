@@ -1,0 +1,27 @@
+on: [push]
+
+jobs:
+    unit_testing_castorapi:
+        runs-on: ubuntu-latest
+        env: 
+            working-dir: ./
+        steps:
+        - uses: actions/checkout@v2
+        - name: Set up Python 3.x
+          uses: actions/setup-python@v1
+          with:
+            python-version: '3.x'
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install pandas requests progressbar2
+            python setup.py install
+        - name: Test with python default tests
+          working-directory: ${{env.working-directory}}
+          env:
+            castor_clientid: ${{ secrets.castor_clientid }}
+            castor_secret: ${{ secrets.castor_secret }}
+          run: |
+            export castor_clientid
+            export castor_secret
+            python ./tests/unit_tests.py
