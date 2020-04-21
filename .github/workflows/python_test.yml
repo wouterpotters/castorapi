@@ -24,9 +24,9 @@ jobs:
             # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
             flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         - name: Test with python default tests
-          working-directory: ${{env.working-directory}}/tests
+          working-directory: ${{env.working-directory}}
           env:
             castor_clientid: ${{ secrets.castor_clientid }}
             castor_secret: ${{ secrets.castor_secret }}
           run: |
-            python unittests.py
+            python ./tests/unit_tests.py
