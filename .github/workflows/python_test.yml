@@ -29,5 +29,6 @@ jobs:
             castor_clientid: ${{ secrets.castor_clientid }}
             castor_secret: ${{ secrets.castor_secret }}
           run: |
-            print $castor_clientid
+            export castor_clientid
+            export castor_secret
             python ./tests/unit_tests.py
