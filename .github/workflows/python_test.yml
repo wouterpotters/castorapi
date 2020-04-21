@@ -25,4 +25,4 @@ jobs:
         - name: Test with python default tests
           run: |
             python -v
-            python test/unittest.py
+            python test/unittests.py
