@@ -84,11 +84,12 @@ class CastorApi:
             self._token = rd['access_token']
         else:
             raise NameError(
-                'castor_api expects either 1 input argument; a folder with' +
-                ' a \'secret\' and a \'client\' file containing the client ' +
-                'and secret as defined in your castor profile on ' +
-                'https://data.castoredc.com/. ' +
-                'Or use these 2 input arguments: client_id and client_secret')
+                'castor_api expects either 1 input argument; a folder with'
+                + ' a \'secret\' and a \'client\' file containing the client '
+                + 'and secret as defined in your castor profile on '
+                + 'https://data.castoredc.com/. '
+                + 'Or use these 2 input arguments: '
+                + 'client_id and client_secret')
 
     def __request(self, request):
         request_uri = self._base_url + self._api_request_path + request
