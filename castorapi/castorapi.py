@@ -59,7 +59,8 @@ class CastorApi:
         if folder_with_client_and_secret is not None:
             if os.path.isdir(folder_with_client_and_secret):
                 # load client id & secret for current user from folder
-                def find_file(name): return [file for file in os.listdir(
+                def find_file(name):
+                    return [file for file in os.listdir(
                         folder_with_client_and_secret) if name in file][0]
                 with open(os.path.join(folder_with_client_and_secret,
                                        find_file('client')), 'r') as file:
@@ -81,8 +82,9 @@ class CastorApi:
                                                  'grant_type':
                                                      'client_credentials'})
             rd = json.loads(response_token.text)
+            # throw error if an error occurs.
             if 'error' in rd:
-                raise NameError('error '+rd['error'] + '\n'\
+                raise NameError('error ' + rd['error'] + '\n'
                                 + rd['error_description'])
             self._token = rd['access_token']
         else:
