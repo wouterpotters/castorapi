@@ -53,7 +53,9 @@ class CastorApi:
     # (for Castor_api.records_reports_all())
     debug_mode = False
 
-    def __init__(self, folder_with_client_and_secret):
+    def __init__(self, folder_with_client_and_secret=None,
+                 client_id=None,
+                 client_secret=None):
         if os.path.isdir(folder_with_client_and_secret):
             # load client id & secret for current user from folder
             def find_file(name): return [file for file in os.listdir(
@@ -64,6 +66,7 @@ class CastorApi:
             with open(os.path.join(folder_with_client_and_secret,
                                    find_file('secret')), 'r') as file:
                 client_secret = file.read().rstrip()
+        if client_id is not None and client_secret is not None:
             # using the client and secret, get an access token
             # this castor api token can usually be used for up to 18000
             # seconds, after which it stops working (and could theoretically
@@ -76,14 +79,16 @@ class CastorApi:
                                                      client_secret,
                                                  'grant_type':
                                                      'client_credentials'})
+            print(response_token)
             rd = json.loads(response_token.text)
             self._token = rd['access_token']
         else:
             raise NameError(
-                'castor_api expects 1 input argument; a folder with a ' +
+                'castor_api expects either 1 input argument; a folder with a ' +
                 '\'secret\' and a \'client\' file containing the client and ' +
                 'secret as defined in your castor profile on ' +
-                'https://data.castoredc.com/')
+                'https://data.castoredc.com/. ' +
+                'Or 2 input arguments: client_id and client_secret')
 
     def __request(self, request):
         request_uri = self._base_url + self._api_request_path + request
@@ -291,10 +296,7 @@ class CastorApi:
             supports "metadata","validations", "optiongroup", "dependencies".
             List separated by "|".  Use like: metadata|validations|optiongroup
 
-        Returns
-        -------
-        TYPE
-            DESCRIPTION.
+
 
         """
         study_id = self.__study_id_saveload(study_id)
