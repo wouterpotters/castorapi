@@ -37,6 +37,7 @@ class CastorApi:
     """
     # FIXME: ADD POST METHODS and POST API ENDPOINTS
     # FIXME: ADD PATCH METHODS and PATCH API ENDPOINTS
+    # FIXME: ENABLE MULTIPLE FIELD UPDATES FOR POST API ENDPOINTS
 
     # define URLs for API
     _base_url = 'https://data.castoredc.com'
@@ -96,7 +97,8 @@ class CastorApi:
                 + 'Or use these 2 input arguments: '
                 + 'client_id and client_secret')
 
-    def __request(self, request):
+    def __request_get(self, request):
+        assert(type(request) == str)
         request_uri = self._base_url + self._api_request_path + request
         try:
             response = requests.get(request_uri,
@@ -119,8 +121,50 @@ class CastorApi:
             raise NameError('error with api request (' +
                             request+'): ' + response.text)
 
-    def __request_json(self, request):
-        response = self.__request(request)
+    def __request_post(self, request, dict_body):
+        assert(type(request) == str)
+        assert(type(dict_body) == dict)
+        request_uri = self._base_url + self._api_request_path + request
+        try:
+            response = requests.post(request_uri,
+                                     headers={'Authorization': 'Bearer ' +
+                                              self._token,
+                                              'content-type': 'application/json'},
+                                     data=json.dumps(dict_body))
+            response.raise_for_status()
+            if response.status_code == 201:
+                logging.info('Field value successfully created')
+            elif response.status_code == 400:
+                raise NameError('Invalid input - '
+                                + response.content)
+            elif response.status_code == 401:
+                raise NameError('The given Record or Field does not exist - '
+                                + response.content)
+            elif response.status_code == 422:
+                raise NameError('Unprocessable entity - '
+                                + response.content)
+            else:
+                raise NameError('Unexpected error - '
+                                + response.content)
+        except requests.exceptions.HTTPError as errh:
+            logging.warning("Http Error:", errh)
+            # 500: timeout when too much data is requested with export fnc
+            # 404: data not available for request
+        except requests.exceptions.ConnectionError as errc:
+            logging.warning("Error Connecting:", errc)
+        except requests.exceptions.Timeout as errt:
+            logging.warning("Timeout Error:", errt)
+        except requests.exceptions.RequestException as err:
+            logging.warning("Oops: Something Else", err)
+        if response:
+            return response
+        else:
+            raise NameError('error with api request (' + request +
+                            ') and body (' + json.dumps(dict_body) + '): ' +
+                            response.text)
+
+    def __request_json_get(self, request):
+        response = self.__request_get(request)
         rd = response.json()
         # pagination: sometimes multiple entries are found; combine these
         if 'page' in rd and '_embedded' in rd:
@@ -134,6 +178,24 @@ class CastorApi:
                 for key in rd2['_embedded'].keys():
                     rd['_embedded'][key] += \
                         rd2['_embedded'][key]
+        return rd
+
+    def __request_json_post(self, request, body):
+        response = self.__request_post(request, body)
+        rd = response.json()
+        # pagination: sometimes multiple entries are found; combine these
+        if 'page' in rd and '_embedded' in rd:
+            raise NameError('Did not expect pagination for result of POST.')
+            # rd2 = rd
+            # while rd2['page'] < rd2['page_count']:
+            #     request_uri = rd2['_links']['next']['href']
+            #     response = requests.get(request_uri,
+            #                             headers={'Authorization': 'Bearer ' +
+            #                                      self._token})
+            #     rd2 = response.json()
+            #     for key in rd2['_embedded'].keys():
+            #         rd['_embedded'][key] += \
+            #             rd2['_embedded'][key]
         return rd
 
     def __study_id_saveload(self, study_id_input):
@@ -159,10 +221,10 @@ class CastorApi:
         # API docs seem incorrect for this endpoint.
         # The return type is not a HAIJSON object.
         if country_id:
-            rd = self.__request_json('/country/'+country_id)
+            rd = self.__request_json_get('/country/'+country_id)
             return rd
         else:
-            rd = self.__request_json('/country')
+            rd = self.__request_json_get('/country')
             if 'results' in rd:
                 return rd['results']
             else:
@@ -172,79 +234,143 @@ class CastorApi:
     def request_datapointcollection(self, study_id=None, request_type='study',
                                     record_id=None, report_instance_id=None,
                                     survey_instance_id=None,
-                                    survey_package_instance_id=None):
+                                    survey_package_instance_id=None,
+                                    field_id=None,
+                                    field_value=None,
+                                    instance_id=None,
+                                    change_reason_specific=None,
+                                    confirmed_changes_specific=False,
+                                    request_method='GET'):
+        # request_type: GET  -> get request
+        #               POST -> post request, requires field_id and field_value
         study_id = self.__study_id_saveload(study_id)
+
+        if request_method == 'POST':
+            if field_id is not None and field_value is not None:
+                body = {
+                    'field_id': field_id,
+                    'field_value': field_value
+                }
+
+            else:
+                raise NameError('Use as least study_id, record_id, '
+                                + 'field_id and field_value as inputs.')
+
         rd = None
         if request_type == 'study':
             if record_id:
-                rd = self.__request_json(
-                    '/study/'+study_id +
-                    '/record/'+record_id +
-                    '/data-point-collection/study')
+                request_url = \
+                    '/study/'+study_id +\
+                    '/record/'+record_id +\
+                    '/data-point-collection/study'
+
+                if request_method == 'POST':
+                    if change_reason_specific is not None:
+                        body['change_reason'] = change_reason_specific
+
+                    if confirmed_changes_specific is not None:
+                        body['confirmed_changes'] = confirmed_changes_specific
+
+                    body = {
+                        'common': {
+                            'change_reason': 'Update using API',
+                            'confirmed_changes': True
+                            },
+                        'data': [body]
+                    }
+
             else:
                 raise Exception('Record ID required for endpoint \'study\'')
 
         elif request_type == 'report-instance':
             if record_id:
                 if report_instance_id:
-                    rd = self.__request_json(
-                        '/study/'+study_id +
-                        '/record/'+record_id +
-                        '/data-point-collection/report-instance/' +
-                        report_instance_id)
+                    request_url = \
+                        '/study/'+study_id +\
+                        '/record/'+record_id +\
+                        '/data-point-collection/report-instance/' +\
+                        report_instance_id
+
+                    if request_method == 'POST':
+                        if change_reason_specific is not None:
+                            body['change_reason'] = change_reason_specific
+
+                        if confirmed_changes_specific is not None:
+                            body['confirmed_changes'] = confirmed_changes_specific
+
+                        body = {
+                            'common': {
+                                'change_reason': 'Update using API',
+                                'confirmed_changes': True
+                                },
+                            'data': [body]
+                        }
                 else:
-                    rd = self.__request_json(
-                        '/study/'+study_id +
-                        '/record/'+record_id +
-                        '/data-point-collection/report-instance')
+                    request_url = \
+                        '/study/'+study_id +\
+                        '/record/'+record_id +\
+                        '/data-point-collection/report-instance'
+
             else:
                 if report_instance_id:
-                    rd = self.__request_json(
-                        '/study/'+study_id +
-                        '/data-point-collection/report-instance/' +
-                        report_instance_id)
+                    request_url = \
+                        '/study/'+study_id +\
+                        '/data-point-collection/report-instance/' +\
+                        report_instance_id
                 else:
-                    rd = self.__request_json(
-                        '/study/'+study_id +
-                        '/data-point-collection/report-instance')
+                    request_url = \
+                        '/study/'+study_id +\
+                        '/data-point-collection/report-instance'
 
         elif request_type == 'survey-instance':
             if record_id:
                 if survey_instance_id:
-                    rd = self.__request_json(
-                        '/study/'+study_id +
-                        '/record/'+record_id +
-                        '/data-point-collection/survey-instance')
+                    request_url = \
+                        '/study/'+study_id +\
+                        '/record/'+record_id +\
+                        '/data-point-collection/survey-instance'
                 else:
-                    rd = self.__request_json(
-                        '/study/'+study_id +
-                        '/record/'+record_id +
-                        '/data-point-collection/survey-instance/' +
-                        survey_instance_id)
+                    request_url = \
+                        '/study/'+study_id +\
+                        '/record/'+record_id +\
+                        '/data-point-collection/survey-instance/' +\
+                        survey_instance_id
+
+                    if request_method == 'POST':
+                        if instance_id is not None:
+                            body['instance_id'] = instance_id
+
+                        body = {'data': [body]}
+
             else:
                 if survey_instance_id:
-                    rd = self.__request_json(
-                        '/study/'+study_id +
-                        '/data-point-collection/survey-instance')
+                    request_url = \
+                        '/study/'+study_id +\
+                        '/data-point-collection/survey-instance'
                 else:
-                    rd = self.__request_json(
-                        '/study/'+study_id +
-                        '/data-point-collection' +
-                        '/survey-instance/'+survey_instance_id)
+                    request_url = \
+                        '/study/'+study_id +\
+                        '/data-point-collection' +\
+                        '/survey-instance/'+survey_instance_id
 
         elif request_type == 'survey-package-instance':
             if survey_package_instance_id:
                 if record_id:
-                    rd = self.__request_json(
-                        '/study/'+study_id+'/record/'+record_id +
-                        '/data-point-collection/' +
-                        'survey-package-instance/'+survey_package_instance_id)
+                    request_url = \
+                        '/study/'+study_id+'/record/'+record_id +\
+                        '/data-point-collection/' +\
+                        'survey-package-instance/'+survey_package_instance_id
                 else:
-                    rd = self.__request_json(
-                        '/study/'+study_id +
-                        '/data-point-collection' +
-                        '/survey-package-instance/' +
-                        survey_package_instance_id)
+                    request_url = \
+                        '/study/'+study_id +\
+                        '/data-point-collection' +\
+                        '/survey-package-instance/' +\
+                        survey_package_instance_id
+
+        if request_method == 'GET':
+            rd = self.__request_json_get(request_url)
+        elif request_method == 'POST':
+            rd = self.__request_json_post(request_url, body)
 
         if '_embedded' in rd and 'items' in rd['_embedded']:
             return rd['_embedded']['items']
@@ -254,19 +380,19 @@ class CastorApi:
     # %% export
     def request_study_export_structure(self, study_id=None):
         study_id = self.__study_id_saveload(study_id)
-        response = self.__request('/study/'+study_id+'/export/structure')
+        response = self.__request_get('/study/'+study_id+'/export/structure')
         data = process_table(response.text)
         return data
 
     def request_study_export_data(self, study_id=None):
         study_id = self.__study_id_saveload(study_id)
-        response = self.__request('/study/'+study_id+'/export/data')
+        response = self.__request_get('/study/'+study_id+'/export/data')
         data = process_table(response.text)
         return data
 
     def request_study_export_optiongroups(self, study_id=None):
         study_id = self.__study_id_saveload(study_id)
-        response = self.__request('/study/'+study_id+'/export/optiongroups')
+        response = self.__request_get('/study/'+study_id+'/export/optiongroups')
         data = process_table(response.text)
         return data
 
@@ -274,10 +400,10 @@ class CastorApi:
     def request_fieldoptiongroup(self, study_id=None, optiongroup_id=None):
         study_id = self.__study_id_saveload(study_id)
         if optiongroup_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/field-optiongroup/'+optiongroup_id)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/field-optiongroup')
 
         if '_embedded' in rd and 'fieldOptionGroups' in \
@@ -310,10 +436,10 @@ class CastorApi:
         if include:
             additional_args += '?include='+include
         if field_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/field/'+field_id+additional_args)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/field'+additional_args)
 
         if '_embedded' in rd and 'fields' in \
@@ -326,10 +452,10 @@ class CastorApi:
     def request_fielddependency(self, study_id=None, fielddependency_id=None):
         study_id = self.__study_id_saveload(study_id)
         if fielddependency_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/field-dependency/'+fielddependency_id)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/field-dependency')
 
         if '_embedded' in rd and 'steps' in \
@@ -342,10 +468,10 @@ class CastorApi:
     def request_fieldvalidation(self, study_id=None, fieldvalidation_id=None):
         study_id = self.__study_id_saveload(study_id)
         if fieldvalidation_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/field-validation/'+fieldvalidation_id)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/field-validation')
 
         if '_embedded' in rd and 'fieldValidations' in \
@@ -358,10 +484,10 @@ class CastorApi:
     def request_institutes(self, study_id=None, institute_id=None):
         study_id = self.__study_id_saveload(study_id)
         if institute_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/institute/'+institute_id)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/institute')
 
         if '_embedded' in rd and 'institutes' in \
@@ -374,11 +500,11 @@ class CastorApi:
     def request_metadata(self, study_id=None, metadata_id=None):
         study_id = self.__study_id_saveload(study_id)
         if metadata_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/metadata/'+metadata_id)
         else:
-            rd = self.__request_json('/study/' + study_id +
-                                     '/metadata')
+            rd = self.__request_json_get('/study/' + study_id +
+                                         '/metadata')
 
         if '_embedded' in rd and 'steps' in \
                 rd['_embedded']:
@@ -390,10 +516,10 @@ class CastorApi:
     def request_metadatatype(self, study_id=None, metadatatype_id=None):
         study_id = self.__study_id_saveload(study_id)
         if metadatatype_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/metadatatype/'+metadatatype_id)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/metadatatype')
 
         if '_embedded' in rd and 'steps' in \
@@ -406,11 +532,11 @@ class CastorApi:
     def request_phase(self, study_id=None, phase_id=None):
         study_id = self.__study_id_saveload(study_id)
         if phase_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/phase/'+phase_id)
         else:
-            rd = self.__request_json('/study/' + study_id +
-                                     '/phase')
+            rd = self.__request_json_get('/study/' + study_id +
+                                         '/phase')
 
         if '_embedded' in rd and 'phases' in \
                 rd['_embedded']:
@@ -422,11 +548,11 @@ class CastorApi:
     def request_query(self, study_id=None, query_id=None):
         study_id = self.__study_id_saveload(study_id)
         if query_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/query/'+query_id)
         else:
-            rd = self.__request_json('/study/' + study_id +
-                                     '/query')
+            rd = self.__request_json_get('/study/' + study_id +
+                                         '/query')
 
         if '_embedded' in rd and 'queries' in \
                 rd['_embedded']:
@@ -435,23 +561,41 @@ class CastorApi:
             return rd
 
     # %% record
-    def request_study_records(self, study_id=None, archived=0, institute=None,
-                              record_id=None):
+    def request_study_records(self, study_id=None, archived=0,
+                              institute_id=None, record_id=None,
+                              ccr_patient_id=None, email_address=None,
+                              request_method='GET'):
         study_id = self.__study_id_saveload(study_id)
         additional_parameters = '?archived='+str(archived)
-        if institute:
-            additional_parameters += '&institute='+str(institute)
+        if institute_id:
+            additional_parameters += '&institute='+str(institute_id)
         if record_id:
             record_id_param = '/'+record_id
         else:
             record_id_param = ''
-        rd = self.__request_json('/study/'+study_id+'/record' +
-                                 record_id_param +
-                                 additional_parameters)
-        if '_embedded' in rd and 'records' in \
-                rd['_embedded']:
-            # for some users with less rights record (and few records)
-            # 'Record ID' is regarded as an INT, whereas it should be STR.
+
+        if request_method == 'GET':
+            rd = self.__request_json_get('/study/'+study_id+'/record' +
+                                         record_id_param +
+                                         additional_parameters)
+        elif request_method == 'POST':
+            body_dict = {
+                'institute_id': institute_id
+                }
+
+            if record_id is not None:
+                body_dict['record_id'] = record_id
+
+            if ccr_patient_id is not None:
+                body_dict['ccr_patient_id'] = ccr_patient_id
+
+            if email_address is not None:
+                body_dict['email_address'] = email_address
+
+            rd = self.__request_json_post('/study/'+study_id+'/record',
+                                          body_dict)
+
+        if '_embedded' in rd and 'records' in rd['_embedded']:
             rd = rd['_embedded']['records']
             return rd
         else:
@@ -460,7 +604,7 @@ class CastorApi:
     # %% record-progress
     def request_recordprogress(self, study_id=None):
         study_id = self.__study_id_saveload(study_id)
-        rd = self.__request_json(
+        rd = self.__request_json_get(
             '/study/'+study_id+'/record-progress/steps')
 
         if '_embedded' in rd and 'records' in \
@@ -473,10 +617,10 @@ class CastorApi:
     def request_report(self, study_id=None, report_id=None):
         study_id = self.__study_id_saveload(study_id)
         if report_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/report/'+report_id)
         else:
-            rd = self.__request_json('/study/'+study_id+'/report')
+            rd = self.__request_json_get('/study/'+study_id+'/report')
 
         if '_embedded' in rd and 'reports' in \
                 rd['_embedded']:
@@ -490,19 +634,19 @@ class CastorApi:
         study_id = self.__study_id_saveload(study_id)
         if record_id:
             if reportinstance_id:
-                rd = self.__request_json(
+                rd = self.__request_json_get(
                     '/study/'+study_id+'/record/'+record_id +
                     '/report-instance/'+reportinstance_id)
             else:
-                rd = self.__request_json(
+                rd = self.__request_json_get(
                     '/study/'+study_id+'/record/'+record_id +
                     '/report-instance')
         else:
             if reportinstance_id:
-                rd = self.__request_json(
+                rd = self.__request_json_get(
                     '/study/'+study_id+'/report-instance/'+reportinstance_id)
             else:
-                rd = self.__request_json(
+                rd = self.__request_json_get(
                     '/study/'+study_id+'/report-instance')
 
         if '_embedded' in rd and 'reportInstances' in \
@@ -523,12 +667,12 @@ class CastorApi:
                 'Provide a reportinstance_id for request_reportdataentry')
 
         if field_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/record/'+record_id+'/data-point/' +
                 'report/'+reportinstance_id+'/'+field_id +
                 '?validations='+validations)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/record/'+record_id+'/data-point/report' +
                 '?validations='+validations)
 
@@ -545,11 +689,11 @@ class CastorApi:
         if not report_id:
             raise NameError('Provide a report_id for request_reportstep')
         if reportstep_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/report/'+report_id+'/report-step/' +
                 reportstep_id)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/report/'+report_id+'/report-step/')
 
         if '_embedded' in rd and 'report_steps' in \
@@ -562,10 +706,10 @@ class CastorApi:
     def request_step(self, study_id=None, step_id=None):
         study_id = self.__study_id_saveload(study_id)
         if step_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/step/'+step_id)
         else:
-            rd = self.__request_json('/study/'+study_id+'/step')
+            rd = self.__request_json_get('/study/'+study_id+'/step')
 
         if '_embedded' in rd and 'steps' in \
                 rd['_embedded']:
@@ -597,9 +741,9 @@ class CastorApi:
 
         """
         if study_id:
-            rd = self.__request_json('/study/'+study_id)
+            rd = self.__request_json_get('/study/'+study_id)
         else:
-            rd = self.__request_json('/study')
+            rd = self.__request_json_get('/study')
         if '_embedded' in rd and 'study' in rd['_embedded']:
             studies = rd['_embedded']['study']
             if len(studies) == 1 and 'study_id' in studies[0]:
@@ -614,10 +758,10 @@ class CastorApi:
         # API docs seem incorrect for this endpoint.
         # The return type is not a HAIJSON object...
         if user_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/user/'+user_id)
         else:
-            rd = self.__request_json('/study/'+study_id+'/user')
+            rd = self.__request_json_get('/study/'+study_id+'/user')
         return rd
 
     # %% study-data-entry - naming is weird; make 2 functions to avoid issues
@@ -634,11 +778,11 @@ class CastorApi:
         if not record_id:
             raise NameError('Provide a record_id for request_studydataentry')
         if field_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/record/'+record_id+'/study-data-point/' +
                 field_id+'?validations='+validations)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/record/'+record_id+'/data-point/study' +
                 '?validations='+validations)
         if '_embedded' in rd and 'StudyDataPoints' in rd['_embedded']:
@@ -649,7 +793,7 @@ class CastorApi:
     # %% study-statistics
     def request_statistics(self, study_id=None):
         study_id = self.__study_id_saveload(study_id)
-        rd = self.__request_json('/study/'+study_id+'/statistics')
+        rd = self.__request_json_get('/study/'+study_id+'/statistics')
         return rd
 
     # %% survey
@@ -659,10 +803,10 @@ class CastorApi:
         if include:
             add_args += '?' + include
         if survey_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/survey/'+survey_id+add_args)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/survey'+add_args)
         if '_embedded' in rd and 'surveys' in rd['_embedded']:
             return rd['_embedded']['surveys']
@@ -672,10 +816,10 @@ class CastorApi:
     def request_surveypackage(self, study_id=None, surveypackage_id=None):
         study_id = self.__study_id_saveload(study_id)
         if surveypackage_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/surveypackage/'+surveypackage_id)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/surveypackage')
         if '_embedded' in rd and 'survey_packages' in rd['_embedded']:
             return rd['_embedded']['survey_packages']
@@ -694,11 +838,11 @@ class CastorApi:
         if ccr_patient_id:
             add_args += '?ccr_patient_id=' + ccr_patient_id
         if surveypackageinstance_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/surveypackageinstance/' +
                 surveypackageinstance_id)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/surveypackageinstance'+add_args)
         if '_embedded' in rd and 'surveypackageinstance' in rd['_embedded']:
             return rd['_embedded']['surveypackageinstance']
@@ -715,11 +859,11 @@ class CastorApi:
             raise NameError(
                 'Provide a survey_instance_id for request_surveydataentry')
         if field_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/record/'+record_id+'/data-point/survey/' +
                 survey_instance_id+'/'+field_id)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/record/'+record_id+'/data-point/survey/' +
                 survey_instance_id+'')
         if '_embedded' in rd and 'SurveyDataPoints' in rd['_embedded']:
@@ -734,11 +878,11 @@ class CastorApi:
         if not survey_id:
             raise NameError('Provide a survey_id for request_surveystep')
         if surveystep_id:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/survey/'+survey_id +
                 '/survey_step/'+surveystep_id)
         else:
-            rd = self.__request_json(
+            rd = self.__request_json_get(
                 '/study/'+study_id+'/survey/'+survey_id+'/survey_step')
         if '_embedded' in rd and 'survey_steps' in rd['_embedded']:
             return rd['_embedded']['survey_steps']
@@ -748,9 +892,9 @@ class CastorApi:
     # %% user
     def request_user(self, user_id=None):
         if user_id:
-            rd = self.__request_json('/user/'+user_id)
+            rd = self.__request_json_get('/user/'+user_id)
         else:
-            rd = self.__request_json('/user')
+            rd = self.__request_json_get('/user')
         if '_embedded' in rd and 'users' in rd['_embedded']:
             return rd['_embedded']['users']
         else:
@@ -783,6 +927,9 @@ class CastorApi:
                             add_including_center=False):
         study_id = self.__study_id_saveload(study_id)
 
+        logging.info('Fetching all data from study id (' + study_id +
+                     '). This takes some time... be patient.')
+
         # get study and report structure
         # sort on form collection order and field order
         # (this matches how data is filled)
@@ -803,6 +950,7 @@ class CastorApi:
 
         # GET ALL STUDY RECORDS
         records = self.request_study_records(study_id)
+
         if self.debug_mode:  # set to True when debugging.
             records = records[0:25]  # test data
             logging.warning('DEBUG MODE ACTIVE. ONLY PROCESSING ' +
@@ -874,6 +1022,7 @@ class CastorApi:
 
     def __studydataentry_or_none(self, study_id=None, record_id=None,
                                  field_id=None):
+        study_id = self.__study_id_saveload(study_id)
         try:
             field = self.request_studydataentry(
                 study_id=study_id, record_id=record_id, field_id=field_id)
@@ -898,13 +1047,20 @@ class CastorApi:
             return None
 
         # collect or use input records
-        if not records:
+        if records is None:
             logging.warning(
                 'no records provided, getting data for ALL records')
             records = self.request_study_records()
 
+        if type(records) is str:
+            records = [self.request_study_records(record_id=records)]
+
+        if type(records) == dict:
+            records = [records]
+
         # get value or set None if no data was found
         if records:
+            assert(type(records) == list)
             field_values = [self.__studydataentry_or_none(
                 record_id=record['record_id'], field_id=field_id)
                 for record in records]
@@ -914,12 +1070,15 @@ class CastorApi:
 
 
 if __name__ == "__main__":
-    print('\nUSAGE of CastorApi:\n')
-    print(' c = CastorApi(\'/path/to/folder/with/secret_client\')')
-    print(' c.select_study_by_name(\'<CASTOR_STUDY_NAME>\') # all ' +
+    print('\n# USAGE of CastorApi:\n')
+    print('import castorapi as ca')
+    print('c = ca.CastorApi(\'/path/to/folder/with/secret_client\')')
+    print('c.select_study_by_name(\'<CASTOR_STUDY_NAME>\') # all ' +
           'following commands use this study selection')
-    print(' stats = c.request_statistics()')
-    print(' df_study, df_structure_study, df_report, df_structure_report, ' +
+    print('stats = c.request_statistics()')
+    print('print(stats)')
+    print('df_study, df_structure_study, df_report, df_structure_report, ' +
           'df_optiongroups_structure = c.records_reports_all()')
-    print(' users_in_study = c.request_studyuser()')
-    print('\nsee also: https://data.castoredc.com/api\n')
+    print('users_in_study = c.request_studyuser()')
+    print('print(users_in_study)')
+    print('\n# See also: https://data.castoredc.com/api\n')
