@@ -20,16 +20,14 @@ folder on your PC. Do not share these files with anyone.
 See also https://data.castoredc.com/api and https://helpdesk.castoredc.com/article/124-application-programming-interface-api
 
 ## Example code
-    import castorapi
-    c = CastorApi("/path/to/folder/with/secret_client")
-    c.select_study_by_name("<castor_name_of_your_study>")
+    import castorapi as ca
+    c = ca.CastorApi('/path/to/folder/with/secret_client')
+    c.select_study_by_name('<CASTOR_STUDY_NAME>') # all following commands use this study selection
+    stats = c.request_statistics()
+    print(stats)
+    df_study, df_structure_study, df_report, df_structure_report, df_optiongroups_structure = c.records_reports_all()
+    users_in_study = c.request_studyuser()
+    print(users_in_study)
     
-    # export data - fast method for small studies.
-    data = c.request_study_export_data() 
-    
-    # export data - slow method, but required for large studies with many records.
-    # (or if you start getting a error 500)
-    data = c.records_reports_all()
-
 ## NOTE
 I am not affiliated with Castor EDC in any way. Use this software at your own risk.
