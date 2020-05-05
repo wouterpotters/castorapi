@@ -23,6 +23,7 @@ class TestCastorApi(unittest.TestCase):
         # The secret and client id are stored in github secrets
         client_id = os.getenv('castor_clientid')
         client_secret = os.getenv('castor_secret')
+        [print(w) for w in client_id]
         self.c = ca.CastorApi(client_id=client_id,
                               client_secret=client_secret)
 
