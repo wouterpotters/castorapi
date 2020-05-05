@@ -1,11 +1,6 @@
 import os
 import unittest
-# import castorapi as ca
-
-import importlib.util
-spec = importlib.util.spec_from_file_location("castorapi.CastorApi", '/Users/wouterpotters/Documents/Repositories/castor-python/castorapi/castorapi.py')
-ca = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(ca)
+import castorapi as ca
 
 
 class TestCastorApi(unittest.TestCase):
