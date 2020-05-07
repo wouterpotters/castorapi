@@ -5,10 +5,10 @@ name: Upload Python Package to test
 
 on:
   # Trigger the workflow on push or pull request,
-  # but only for the master branch
+  # but only when setup.py changes (this should change the version number)
   push:
-    branches:
-      - master
+    paths:
+      - 'setup.py'
   # Also trigger on page_build, as well as release created events
   page_build:
   release:
