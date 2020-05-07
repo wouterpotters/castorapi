@@ -7,7 +7,7 @@ setup(
     description='Python API wrapper for Castor EDC to ' + \
                 'fetch data from you clinical study.',
     author='Wouter V. Potters',                   # Type in your name
-    author_email='w.v.potters@amsterdamumc.nl',      # Type in your E-Mail
+    author_email='w.v.potters@amsterdamumc.nl',   # Type in your E-Mail
     # Provide either the link to your github or to your website
     url='https://github.com/wouterpotters/castorapi',
     # I explain this later on
