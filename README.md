@@ -38,3 +38,4 @@ See also https://data.castoredc.com/api and https://helpdesk.castoredc.com/artic
     
 ## NOTE
 I am not affiliated with Castor EDC in any way. Use this software at your own risk.
+If this API tool does not suffice - take a look at the work from Reinier van Linschoten, who also created a Python wrapper for Castor EDC (2021). (https://github.com/reiniervlinschoten/castoredc_api_client)
