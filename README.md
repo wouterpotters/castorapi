@@ -36,6 +36,14 @@ See also https://data.castoredc.com/api and https://helpdesk.castoredc.com/artic
     users_in_study = c.request_studyuser()
     print(users_in_study)
     
+    # Getting data from castor about patients in a study
+    c.request_study_records(record_id='CASTOR00010')
+    
+    # Posting data to castor to create a new patient
+    # add institute_id and , request_method='POST' to use this functionality.
+    c.request_study_records(record_id='CASTOR00010', institute_id=<instituteID>, request_method='POST')
+
+    
 ## NOTE
 I am not affiliated with Castor EDC in any way. Use this software at your own risk.
 If this API tool does not suffice - take a look at the work from Reinier van Linschoten, who also created a Python wrapper for Castor EDC (2021). (https://github.com/reiniervlinschoten/castoredc_api_client)
