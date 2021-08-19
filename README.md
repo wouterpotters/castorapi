@@ -45,7 +45,11 @@ See also https://data.castoredc.com/api and https://helpdesk.castoredc.com/artic
     # add institute_id and , request_method='POST' to use this functionality.
     c.request_study_records(record_id='CASTOR00010', institute_id=<instituteID>, request_method='POST')
 
-    
+## Known issues
+1. The documentation is sparse. Feel free to contribute.
+2. Not all Castor API functions are implemented (I implement them on a need-to-use basis), feel free to contribute.
+3. See https://github.com/wouterpotters/castorapi/issues for an overview of all open issues.
+
 ## NOTE
 I am not affiliated with Castor EDC in any way. Use this software at your own risk.
 If this API tool does not suffice - take a look at the work from Reinier van Linschoten, who also created a Python package for two-way communication Castor EDC (2021). (https://github.com/reiniervlinschoten/castoredc_api)
