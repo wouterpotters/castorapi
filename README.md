@@ -22,7 +22,9 @@ Using pip (https://pypi.org/project/castorapi/):
 ## Usage
 First, make sure that save the client and secret from your Castor account in 
 seperate *client* and *secret* files (without line endings) in a private 
-folder on your PC. Do not share these files with anyone.    
+folder on your PC. Do not share these files with anyone.
+
+![image](https://user-images.githubusercontent.com/981436/130036568-6209334a-2a8b-4948-9387-7c6c74e0ef08.png)
 
 See also https://data.castoredc.com/api and https://helpdesk.castoredc.com/article/124-application-programming-interface-api
 
