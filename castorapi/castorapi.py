@@ -108,7 +108,7 @@ class CastorApi:
                                              self._token})
             response.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            logging.warning("Http Error:", str(errh))
+            logging.info("Http Error:", str(errh))
             # 500: timeout when too much data is requested with export fnc
             # 404: data not available for request
         except requests.exceptions.ConnectionError as errc:
@@ -153,7 +153,7 @@ class CastorApi:
                 raise NameError('Unexpected error - '
                                 + response.content)
         except requests.exceptions.HTTPError as errh:
-            logging.warning("Http Error:", str(errh))
+            logging.info("Http Error:", str(errh))
             # 500: timeout when too much data is requested with export fnc
             # 404: data not available for request
         except requests.exceptions.ConnectionError as errc:
