@@ -1,3 +1,4 @@
+from ast import Str
 import io
 import json
 import os.path
@@ -27,17 +28,18 @@ class CastorApi:
       FOLDER (i.e. github)
     # KEEP YOUR CASTOR LOGIN AND CASTOR SECRET secret!
 
-    TODO: Only request endpoints are implemented. Add more if you like :)
+    TODO: Only request and some post endpoints are implemented. Add more if you like :)
 
     See also https://data.castoredc.com/api
 
     Author: Wouter Potters, Amsterdam UMC
-    Date: March, 2020
+    Date: July, 2022
     I am not affiliated with Castor EDC in any way
     """
-    # FIXME: ADD POST METHODS and POST API ENDPOINTS
+    # FIXME: ADD MORE POST METHODS and MORE POST API ENDPOINTS
     # FIXME: ADD PATCH METHODS and PATCH API ENDPOINTS
     # FIXME: ENABLE MULTIPLE FIELD UPDATES FOR POST API ENDPOINTS
+    # See also: https://github.com/wouterpotters/castorapi/issues
 
     # define URLs for API
     _base_url = 'https://data.castoredc.com'
@@ -106,19 +108,23 @@ class CastorApi:
                                              self._token})
             response.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            logging.warning("Http Error:", errh)
+            logging.warning("Http Error:", str(errh))
             # 500: timeout when too much data is requested with export fnc
             # 404: data not available for request
         except requests.exceptions.ConnectionError as errc:
-            logging.warning("Error Connecting:", errc)
+            logging.warning("Error Connecting:", str(errc))
         except requests.exceptions.Timeout as errt:
-            logging.warning("Timeout Error:", errt)
+            logging.warning("Timeout Error:", str(errt))
         except requests.exceptions.RequestException as err:
-            logging.warning("Oops: Something Else", err)
+            logging.warning("Oops: Something Else", str(err))
         if response:
             return response
         else:
-            raise NameError('error with api request (' +
+            if response.text.startswith('404'):
+                # no data; set response to False = Data not found
+                return False
+            else:
+                raise NameError('error with api request (' +
                             request+'): ' + response.text)
 
     def __request_post(self, request, dict_body):
@@ -147,15 +153,15 @@ class CastorApi:
                 raise NameError('Unexpected error - '
                                 + response.content)
         except requests.exceptions.HTTPError as errh:
-            logging.warning("Http Error:", errh)
+            logging.warning("Http Error:", str(errh))
             # 500: timeout when too much data is requested with export fnc
             # 404: data not available for request
         except requests.exceptions.ConnectionError as errc:
-            logging.warning("Error Connecting:", errc)
+            logging.warning("Error Connecting:", str(errc))
         except requests.exceptions.Timeout as errt:
-            logging.warning("Timeout Error:", errt)
+            logging.warning("Timeout Error:", str(errt))
         except requests.exceptions.RequestException as err:
-            logging.warning("Oops: Something Else", err)
+            logging.warning("Oops: Something Else", str(err))
         if response:
             return response
         else:
@@ -165,6 +171,8 @@ class CastorApi:
 
     def __request_json_get(self, request):
         response = self.__request_get(request)
+        if isinstance(response, (bool)) and response == False:
+            return False
         rd = response.json()
         # pagination: sometimes multiple entries are found; combine these
         if 'page' in rd and '_embedded' in rd:
