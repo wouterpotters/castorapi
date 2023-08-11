@@ -6,6 +6,10 @@ anaconda login
 # Build and publish to https://anaconda.org/wouterpotters/castorapi:
 cd ~/to/folder/with/castorapi_conda/folder
 conda-build castorapi_conda
+conda-build --python 3.11 castorapi_conda
+conda-build --python 3.10 castorapi_conda
+conda-build --python 3.9 castorapi_conda
+conda-build --python 3.8 castorapi_conda
 conda-build --python 3.7 castorapi_conda
 conda-build --python 3.6 castorapi_conda
 conda-build --python 3.5 castorapi_conda
