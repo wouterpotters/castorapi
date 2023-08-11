@@ -924,7 +924,7 @@ class CastorApi:
             return None
 
     def records_reports_all(self, study_id=None, report_names=[],
-                            add_including_center=False):
+                            add_including_center=False, include_columns_without_data=False):
         study_id = self.__study_id_saveload(study_id)
 
         logging.info('Fetching all data from study id (' + study_id +
@@ -979,6 +979,13 @@ class CastorApi:
         fields = self.request_field(include='optiongroup')
         field_dict = {f['field_id']: f['field_variable_name'] for f in fields}
         df_study.rename(columns=field_dict, inplace=True)
+
+        # Some columns do not have any data entries; add them and fill them with NaN
+        if include_columns_without_data:
+            for nc in [f['field_variable_name'] for f in fields]:
+                if nc not in df_study.columns:
+                     df_study[nc] = float('nan')
+                                
         df_study.reset_index(level=0, inplace=True)
 
         df_report = pd.DataFrame(report_data)
