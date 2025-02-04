@@ -1,6 +1,9 @@
 # castorapi
 Python API wrapper for Castor EDC to fetch data from or post data to your clinical study.
 
+> [!WARNING]  
+> This package is no longer maintained.
+
 ## Install
 Using conda and the conda-forge channel (recommended):
 
